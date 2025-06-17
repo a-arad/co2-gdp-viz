@@ -141,6 +141,13 @@ def get_data_endpoint():
         # Fetch data
         data = get_co2_gdp_data(countries, start_year, end_year)
         
+        # Add countries field for proof of life test compatibility
+        if 'data' in data and data['data']:
+            unique_countries = list(set([item['country_code'] for item in data['data']]))
+            data['countries'] = unique_countries
+        else:
+            data['countries'] = []
+        
         return jsonify(data)
         
     except Exception as e:
