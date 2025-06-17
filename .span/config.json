@@ -1,0 +1,73 @@
+{
+  "orchestration": {
+    "auto_coordination": true,
+    "max_parallel_tasks": 3,
+    "review_required": true
+  },
+  "project": {
+    "architecture": {
+      "backend": {
+        "framework": "Flask",
+        "language": "Python",
+        "libraries": [
+          "wbgapi",
+          "flask-cors",
+          "pandas"
+        ]
+      },
+      "database": null,
+      "deployment": "Vercel",
+      "frontend": {
+        "framework": "vanilla",
+        "language": "JavaScript",
+        "libraries": [
+          "d3",
+          "axios"
+        ]
+      }
+    },
+    "description": "Interactive D3 visualization showing CO2 emissions vs GDP per capita over time using World Bank data with country selection and temporal animation",
+    "features": [
+      {
+        "description": "Python backend to fetch CO2 emissions and GDP per capita data from World Bank API",
+        "name": "Environmental Data Fetching",
+        "priority": "high"
+      },
+      {
+        "description": "D3.js animated scatter plot showing CO2 vs GDP with time progression",
+        "name": "Animated Scatter Plot",
+        "priority": "high"
+      },
+      {
+        "description": "Multi-select dropdown to filter and highlight specific countries",
+        "name": "Country Filtering",
+        "priority": "medium"
+      },
+      {
+        "description": "Play/pause controls for temporal animation with year slider",
+        "name": "Time Animation Controls",
+        "priority": "medium"
+      }
+    ],
+    "implementation_plan": {
+      "phases": [
+        {
+          "description": "Create robust data fetching and processing pipeline",
+          "name": "Data Infrastructure",
+          "tasks": []
+        },
+        {
+          "description": "Build D3 animated scatter plot with controls",
+          "name": "Interactive Visualization",
+          "tasks": []
+        },
+        {
+          "description": "Add country filtering and animation controls",
+          "name": "User Experience",
+          "tasks": []
+        }
+      ]
+    },
+    "name": "co2-gdp-viz"
+  }
+}
