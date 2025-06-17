@@ -1,0 +1,5 @@
+Flask==2.3.3
+Flask-CORS==4.0.0
+pandas==2.3.0
+wbgapi==1.0.12
+pytest==7.4.2
