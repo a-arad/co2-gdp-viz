@@ -119,7 +119,7 @@
             "test_type": "python_function"
           },
           "retry_count": 0,
-          "status": "pending",
+          "status": "completed",
           "title": "Implement World Bank Data Fetcher"
         },
         "frontend-api-client": {
