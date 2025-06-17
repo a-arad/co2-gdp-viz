@@ -100,7 +100,7 @@
             "test_type": "http_endpoint"
           },
           "retry_count": 0,
-          "status": "running",
+          "status": "completed",
           "title": "Implement Flask API Endpoints"
         },
         "backend-wb-data-fetcher": {
