@@ -1,73 +1,213 @@
 {
-  "orchestration": {
-    "auto_coordination": true,
-    "max_parallel_tasks": 3,
-    "review_required": true
-  },
-  "project": {
-    "architecture": {
-      "backend": {
-        "framework": "Flask",
-        "language": "Python",
-        "libraries": [
-          "wbgapi",
-          "flask-cors",
-          "pandas"
+  "created_at": "2025-06-17T16:16:45.301494+00:00",
+  "orchestration_plan": {
+    "execution_phases": [
+      {
+        "name": "Phase 1 - backend-wb-data-fetcher",
+        "parallel_tasks": [],
+        "sequential_tasks": [
+          "backend-wb-data-fetcher"
         ]
       },
-      "database": null,
-      "deployment": "Vercel",
-      "frontend": {
-        "framework": "vanilla",
-        "language": "JavaScript",
-        "libraries": [
-          "d3",
-          "axios"
+      {
+        "name": "Phase 2 - backend-flask-api",
+        "parallel_tasks": [],
+        "sequential_tasks": [
+          "backend-flask-api"
         ]
-      }
-    },
-    "description": "Interactive D3 visualization showing CO2 emissions vs GDP per capita over time using World Bank data with country selection and temporal animation",
-    "features": [
-      {
-        "description": "Python backend to fetch CO2 emissions and GDP per capita data from World Bank API",
-        "name": "Environmental Data Fetching",
-        "priority": "high"
       },
       {
-        "description": "D3.js animated scatter plot showing CO2 vs GDP with time progression",
-        "name": "Animated Scatter Plot",
-        "priority": "high"
+        "name": "Phase 3 - frontend-api-client",
+        "parallel_tasks": [],
+        "sequential_tasks": [
+          "frontend-api-client"
+        ]
       },
       {
-        "description": "Multi-select dropdown to filter and highlight specific countries",
-        "name": "Country Filtering",
-        "priority": "medium"
+        "name": "Phase 4 - frontend-scatter-plot",
+        "parallel_tasks": [],
+        "sequential_tasks": [
+          "frontend-scatter-plot"
+        ]
       },
       {
-        "description": "Play/pause controls for temporal animation with year slider",
-        "name": "Time Animation Controls",
-        "priority": "medium"
+        "name": "Phase 5 - frontend-country-filter",
+        "parallel_tasks": [],
+        "sequential_tasks": [
+          "frontend-country-filter"
+        ]
+      },
+      {
+        "name": "Phase 6 - frontend-time-controls",
+        "parallel_tasks": [],
+        "sequential_tasks": [
+          "frontend-time-controls"
+        ]
       }
     ],
-    "implementation_plan": {
-      "phases": [
-        {
-          "description": "Create robust data fetching and processing pipeline",
-          "name": "Data Infrastructure",
-          "tasks": []
+    "task_graph": {
+      "dependencies": {
+        "backend-flask-api": [
+          "backend-wb-data-fetcher"
+        ],
+        "backend-wb-data-fetcher": [],
+        "frontend-api-client": [
+          "backend-flask-api"
+        ],
+        "frontend-country-filter": [
+          "frontend-scatter-plot"
+        ],
+        "frontend-scatter-plot": [
+          "frontend-api-client"
+        ],
+        "frontend-time-controls": [
+          "frontend-scatter-plot"
+        ]
+      },
+      "dependents": {
+        "backend-flask-api": [
+          "frontend-api-client"
+        ],
+        "backend-wb-data-fetcher": [
+          "backend-flask-api"
+        ],
+        "frontend-api-client": [
+          "frontend-scatter-plot"
+        ],
+        "frontend-country-filter": [],
+        "frontend-scatter-plot": [
+          "frontend-time-controls",
+          "frontend-country-filter"
+        ],
+        "frontend-time-controls": []
+      },
+      "tasks": {
+        "backend-flask-api": {
+          "component": "backend",
+          "dependencies": [
+            "backend-wb-data-fetcher"
+          ],
+          "description": "Create Flask routes in app.py to serve World Bank data, following RESTful patterns in backend/CLAUDE.md",
+          "environment": {
+            "DELIVERABLES": "backend/app.py",
+            "TASK_COMPONENT": "backend"
+          },
+          "id": "backend-flask-api",
+          "max_turns": 500,
+          "proof_of_life": {
+            "expected_behavior": "API endpoint returns JSON with country data",
+            "test_script": "import requests\nresponse = requests.get('http://localhost:5000/api/data')\nassert response.status_code == 200\ndata = response.json()\nassert 'countries' in data",
+            "test_type": "http_endpoint"
+          },
+          "retry_count": 0,
+          "status": "pending",
+          "title": "Implement Flask API Endpoints"
         },
-        {
-          "description": "Build D3 animated scatter plot with controls",
-          "name": "Interactive Visualization",
-          "tasks": []
+        "backend-wb-data-fetcher": {
+          "component": "backend",
+          "dependencies": [],
+          "description": "Complete data_fetcher.py to retrieve CO2 and GDP data via wbgapi, following backend/CLAUDE.md patterns for API integration",
+          "environment": {
+            "DELIVERABLES": "backend/data_fetcher.py",
+            "TASK_COMPONENT": "backend"
+          },
+          "id": "backend-wb-data-fetcher",
+          "max_turns": 500,
+          "proof_of_life": {
+            "expected_behavior": "Returns pandas DataFrame with CO2 and GDP data from World Bank API",
+            "test_script": "from data_fetcher import fetch_wb_data\ndata = fetch_wb_data()\nassert 'co2' in data.columns\nassert 'gdp' in data.columns\nassert len(data) > 0",
+            "test_type": "python_function"
+          },
+          "retry_count": 0,
+          "status": "pending",
+          "title": "Implement World Bank Data Fetcher"
         },
-        {
-          "description": "Add country filtering and animation controls",
-          "name": "User Experience",
-          "tasks": []
+        "frontend-api-client": {
+          "component": "frontend",
+          "dependencies": [
+            "backend-flask-api"
+          ],
+          "description": "Complete utils/api.js to fetch data from Flask backend",
+          "environment": {
+            "DELIVERABLES": "frontend/utils/api.js",
+            "TASK_COMPONENT": "frontend"
+          },
+          "id": "frontend-api-client",
+          "max_turns": 500,
+          "proof_of_life": {
+            "expected_behavior": "Successfully fetches and parses API data",
+            "test_script": "const api = require('./api.js');\nasync function test() {\n  const data = await api.fetchData();\n  console.assert(data.length > 0);\n}",
+            "test_type": "javascript_function"
+          },
+          "retry_count": 0,
+          "status": "pending",
+          "title": "Implement Frontend API Client"
+        },
+        "frontend-country-filter": {
+          "component": "frontend",
+          "dependencies": [
+            "frontend-scatter-plot"
+          ],
+          "description": "Create multi-select country filter in components/CountryDropdown.js",
+          "environment": {
+            "DELIVERABLES": "frontend/components/CountryDropdown.js",
+            "TASK_COMPONENT": "frontend"
+          },
+          "id": "frontend-country-filter",
+          "max_turns": 500,
+          "proof_of_life": {
+            "expected_behavior": "Renders multi-select dropdown with country options",
+            "test_script": "const dropdown = new CountryDropdown('#filter');\nconsole.assert(document.querySelector('select[multiple]') !== null);",
+            "test_type": "javascript_function"
+          },
+          "retry_count": 0,
+          "status": "pending",
+          "title": "Implement Country Selection Component"
+        },
+        "frontend-scatter-plot": {
+          "component": "frontend",
+          "dependencies": [
+            "frontend-api-client"
+          ],
+          "description": "Create animated scatter plot visualization in components/AnimatedScatterPlot.js",
+          "environment": {
+            "DELIVERABLES": "frontend/components/AnimatedScatterPlot.js",
+            "TASK_COMPONENT": "frontend"
+          },
+          "id": "frontend-scatter-plot",
+          "max_turns": 500,
+          "proof_of_life": {
+            "expected_behavior": "Renders SVG scatter plot with animation capabilities",
+            "test_script": "const plot = new AnimatedScatterPlot('#viz');\nconsole.assert(d3.select('svg').nodes().length > 0);",
+            "test_type": "javascript_function"
+          },
+          "retry_count": 0,
+          "status": "pending",
+          "title": "Implement D3 Scatter Plot Component"
+        },
+        "frontend-time-controls": {
+          "component": "frontend",
+          "dependencies": [
+            "frontend-scatter-plot"
+          ],
+          "description": "Create time slider and play/pause controls in components/TimeControls.js",
+          "environment": {
+            "DELIVERABLES": "frontend/components/TimeControls.js",
+            "TASK_COMPONENT": "frontend"
+          },
+          "id": "frontend-time-controls",
+          "max_turns": 500,
+          "proof_of_life": {
+            "expected_behavior": "Renders working time slider and animation controls",
+            "test_script": "const controls = new TimeControls('#controls');\nconsole.assert(document.querySelector('input[type=\"range\"]') !== null);",
+            "test_type": "javascript_function"
+          },
+          "retry_count": 0,
+          "status": "pending",
+          "title": "Implement Animation Controls"
         }
-      ]
-    },
-    "name": "co2-gdp-viz"
-  }
+      }
+    }
+  },
+  "task_status": {}
 }
