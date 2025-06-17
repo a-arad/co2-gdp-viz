@@ -161,7 +161,7 @@
             "test_type": "javascript_function"
           },
           "retry_count": 0,
-          "status": "running",
+          "status": "completed",
           "title": "Implement Country Selection Component"
         },
         "frontend-scatter-plot": {
