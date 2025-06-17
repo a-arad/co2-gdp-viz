@@ -802,3 +802,373 @@ describe('CountryDropdown Component', () => {
         });
     });
 });
+
+/**
+ * TimeControls Component Tests
+ * 
+ * Tests for the TimeControls animation component
+ */
+
+describe('TimeControls Component', () => {
+    let container;
+    let TimeControls;
+    
+    beforeAll(async () => {
+        // Import TimeControls component
+        TimeControls = require('../frontend/components/TimeControls.js');
+    });
+    
+    beforeEach(() => {
+        // Create container element
+        container = document.createElement('div');
+        container.id = 'test-time-controls';
+        document.body.appendChild(container);
+        
+        // Clear any existing intervals
+        jest.clearAllTimers();
+        jest.useFakeTimers();
+    });
+    
+    afterEach(() => {
+        // Clean up container
+        if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
+        }
+        
+        // Restore real timers
+        jest.useRealTimers();
+    });
+
+    describe('Component Initialization', () => {
+        test('should initialize with correct container', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            expect(controls.containerId).toBe('test-time-controls');
+            expect(controls.container).toBe(container);
+            expect(container.children.length).toBeGreaterThan(0);
+            
+            controls.destroy();
+        });
+
+        test('should throw error for invalid container', () => {
+            expect(() => {
+                new TimeControls('invalid-container');
+            }).toThrow("Container with ID 'invalid-container' not found");
+        });
+
+        test('should apply custom configuration options', () => {
+            const options = {
+                startYear: 2000,
+                endYear: 2010,
+                currentYear: 2005,
+                animationSpeed: 500,
+                showYearDisplay: false,
+                showSpeedControl: false
+            };
+            
+            const controls = new TimeControls('test-time-controls', options);
+            
+            expect(controls.config.startYear).toBe(2000);
+            expect(controls.config.endYear).toBe(2010);
+            expect(controls.currentYear).toBe(2005);
+            expect(controls.config.animationSpeed).toBe(500);
+            expect(controls.config.showYearDisplay).toBe(false);
+            expect(controls.config.showSpeedControl).toBe(false);
+            
+            controls.destroy();
+        });
+    });
+
+    describe('Year Management', () => {
+        test('should set current year correctly', () => {
+            const controls = new TimeControls('test-time-controls', {
+                startYear: 2000,
+                endYear: 2010
+            });
+            
+            let callbackYear = null;
+            controls.onYearChange = (year) => { callbackYear = year; };
+            
+            controls.setYear(2005, true);
+            
+            expect(controls.getCurrentYear()).toBe(2005);
+            expect(callbackYear).toBe(2005);
+            
+            controls.destroy();
+        });
+
+        test('should reject invalid years', () => {
+            const controls = new TimeControls('test-time-controls', {
+                startYear: 2000,
+                endYear: 2010
+            });
+            
+            const initialYear = controls.getCurrentYear();
+            
+            controls.setYear(1999); // Below range
+            expect(controls.getCurrentYear()).toBe(initialYear);
+            
+            controls.setYear(2011); // Above range
+            expect(controls.getCurrentYear()).toBe(initialYear);
+            
+            controls.destroy();
+        });
+
+        test('should update year range correctly', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            controls.setYearRange(2005, 2015, 2010);
+            
+            expect(controls.config.startYear).toBe(2005);
+            expect(controls.config.endYear).toBe(2015);
+            expect(controls.getCurrentYear()).toBe(2010);
+            expect(controls.getAvailableYears()).toEqual([2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015]);
+            
+            controls.destroy();
+        });
+    });
+
+    describe('Animation Controls', () => {
+        test('should toggle play/pause state', () => {
+            const controls = new TimeControls('test-time-controls', {
+                startYear: 2000,
+                endYear: 2005
+            });
+            
+            let playState = null;
+            controls.onPlayStateChange = (playing) => { playState = playing; };
+            
+            expect(controls.isAnimationPlaying()).toBe(false);
+            
+            controls.play();
+            expect(controls.isAnimationPlaying()).toBe(true);
+            expect(playState).toBe(true);
+            
+            controls.pause();
+            expect(controls.isAnimationPlaying()).toBe(false);
+            expect(playState).toBe(false);
+            
+            controls.destroy();
+        });
+
+        test('should advance through years during animation', () => {
+            const controls = new TimeControls('test-time-controls', {
+                startYear: 2000,
+                endYear: 2002,
+                animationSpeed: 100
+            });
+            
+            const yearChanges = [];
+            controls.onYearChange = (year) => { yearChanges.push(year); };
+            
+            controls.setYear(2000);
+            controls.play();
+            
+            // Advance fake timers
+            jest.advanceTimersByTime(100);
+            expect(controls.getCurrentYear()).toBe(2001);
+            
+            jest.advanceTimersByTime(100);
+            expect(controls.getCurrentYear()).toBe(2002);
+            
+            jest.advanceTimersByTime(100);
+            expect(controls.isAnimationPlaying()).toBe(false); // Should auto-stop at end
+            
+            controls.destroy();
+        });
+
+        test('should stop animation and reset to start', () => {
+            const controls = new TimeControls('test-time-controls', {
+                startYear: 2000,
+                endYear: 2005
+            });
+            
+            controls.setYear(2003);
+            controls.play();
+            
+            controls.stop();
+            
+            expect(controls.isAnimationPlaying()).toBe(false);
+            expect(controls.getCurrentYear()).toBe(2000);
+            
+            controls.destroy();
+        });
+    });
+
+    describe('Speed Control', () => {
+        test('should set animation speed', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            let speedValue = null;
+            controls.onSpeedChange = (speed) => { speedValue = speed; };
+            
+            controls.setSpeed(2);
+            
+            expect(controls.getCurrentSpeed()).toBe(2);
+            expect(speedValue).toBe(2);
+            
+            controls.destroy();
+        });
+
+        test('should restart animation with new speed', () => {
+            const controls = new TimeControls('test-time-controls', {
+                startYear: 2000,
+                endYear: 2005,
+                animationSpeed: 100
+            });
+            
+            controls.play();
+            expect(controls.isAnimationPlaying()).toBe(true);
+            
+            controls.setSpeed(2);
+            
+            expect(controls.isAnimationPlaying()).toBe(true);
+            expect(controls.getCurrentSpeed()).toBe(2);
+            
+            controls.destroy();
+        });
+    });
+
+    describe('Public API', () => {
+        test('should get current year', () => {
+            const controls = new TimeControls('test-time-controls', {
+                currentYear: 2005
+            });
+            
+            expect(controls.getCurrentYear()).toBe(2005);
+            
+            controls.destroy();
+        });
+
+        test('should get available years', () => {
+            const controls = new TimeControls('test-time-controls', {
+                startYear: 2000,
+                endYear: 2003
+            });
+            
+            expect(controls.getAvailableYears()).toEqual([2000, 2001, 2002, 2003]);
+            
+            controls.destroy();
+        });
+
+        test('should check if animation is playing', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            expect(controls.isAnimationPlaying()).toBe(false);
+            
+            controls.play();
+            expect(controls.isAnimationPlaying()).toBe(true);
+            
+            controls.pause();
+            expect(controls.isAnimationPlaying()).toBe(false);
+            
+            controls.destroy();
+        });
+
+        test('should get current speed', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            expect(controls.getCurrentSpeed()).toBe(1);
+            
+            controls.setSpeed(1.5);
+            expect(controls.getCurrentSpeed()).toBe(1.5);
+            
+            controls.destroy();
+        });
+    });
+
+    describe('UI Interaction', () => {
+        test('should enable/disable controls', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            controls.setEnabled(false);
+            expect(controls.controlsElement.style.opacity).toBe('0.5');
+            
+            controls.setEnabled(true);
+            expect(controls.controlsElement.style.opacity).toBe('1');
+            
+            controls.destroy();
+        });
+
+        test('should update display elements', () => {
+            const controls = new TimeControls('test-time-controls', {
+                startYear: 2000,
+                endYear: 2010,
+                showYearDisplay: true
+            });
+            
+            controls.setYear(2005);
+            
+            expect(controls.yearSlider.value).toBe('2005');
+            expect(controls.yearDisplay.textContent).toBe('2005');
+            
+            controls.destroy();
+        });
+    });
+
+    describe('Event Handling', () => {
+        test('should handle year change events', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            const yearChanges = [];
+            controls.onYearChange = (year) => { yearChanges.push(year); };
+            
+            controls.setYear(2005, true);
+            controls.setYear(2006, true);
+            
+            expect(yearChanges).toEqual([2005, 2006]);
+            
+            controls.destroy();
+        });
+
+        test('should handle play state change events', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            const playStateChanges = [];
+            controls.onPlayStateChange = (playing) => { playStateChanges.push(playing); };
+            
+            controls.play();
+            controls.pause();
+            
+            expect(playStateChanges).toEqual([true, false]);
+            
+            controls.destroy();
+        });
+
+        test('should handle speed change events', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            const speedChanges = [];
+            controls.onSpeedChange = (speed) => { speedChanges.push(speed); };
+            
+            controls.setSpeed(2);
+            controls.setSpeed(0.5);
+            
+            expect(speedChanges).toEqual([2, 0.5]);
+            
+            controls.destroy();
+        });
+    });
+
+    describe('Component Cleanup', () => {
+        test('should destroy component and clean up', () => {
+            const controls = new TimeControls('test-time-controls');
+            
+            // Start animation to test cleanup
+            controls.play();
+            expect(controls.isAnimationPlaying()).toBe(true);
+            
+            // Verify component exists
+            expect(container.children.length).toBeGreaterThan(0);
+            
+            // Destroy component
+            controls.destroy();
+            
+            // Verify cleanup
+            expect(container.innerHTML).toBe('');
+            expect(controls.isAnimationPlaying()).toBe(false);
+            expect(controls.availableYears).toEqual([]);
+            expect(controls.currentYear).toBe(controls.config.startYear);
+        });
+    });
+});

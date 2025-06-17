@@ -22,6 +22,18 @@ This file tracks important decisions, context, and learnings across all developm
 - Extended test suite to include 26 comprehensive Flask API tests with 100% pass rate
 - All endpoints properly validate input parameters and handle edge cases
 
+### 2025-06-17: TimeControls Component Implementation
+- Implemented complete TimeControls.js component for animation controls
+- Features include play/pause button, year slider, speed control, and progress bar
+- Component integrates with AnimatedScatterPlot's existing animation methods (play, pause, setYear)
+- Added comprehensive CSS styling with responsive design and accessibility features
+- Implemented keyboard navigation support for accessibility
+- Component follows established patterns from CountryDropdown and AnimatedScatterPlot
+- Added 21 comprehensive test cases covering all functionality
+- All 69 frontend tests pass (API + CountryDropdown + TimeControls)
+- Component provides callbacks for year changes, play state changes, and speed changes
+- Supports configurable year ranges, animation speeds, and UI element visibility
+
 ## Architecture Decisions
 
 <!-- Document architectural choices and rationale -->
