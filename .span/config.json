@@ -182,7 +182,7 @@
             "test_type": "javascript_function"
           },
           "retry_count": 0,
-          "status": "running",
+          "status": "completed",
           "title": "Implement D3 Scatter Plot Component"
         },
         "frontend-time-controls": {
