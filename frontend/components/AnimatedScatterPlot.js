@@ -86,7 +86,7 @@ class AnimatedScatterPlot {
             .attr('text-anchor', 'middle')
             .style('font-size', '18px')
             .style('font-weight', 'bold')
-            .text('CO‚ Emissions vs GDP per Capita');
+            .text('COï¿½ Emissions vs GDP per Capita');
     }
     
     /**
@@ -147,7 +147,7 @@ class AnimatedScatterPlot {
             .attr('y', -60)
             .attr('text-anchor', 'middle')
             .style('font-size', '14px')
-            .text('CO‚ Emissions per Capita (metric tons)');
+            .text('COï¿½ Emissions per Capita (metric tons)');
         
         this.updateAxes();
     }
@@ -448,7 +448,7 @@ class AnimatedScatterPlot {
             <strong>${d.country}</strong><br/>
             Year: ${d.year}<br/>
             GDP per Capita: $${d3.format(',.0f')(d.gdpPerCapita)}<br/>
-            CO‚ per Capita: ${d3.format('.2f')(d.co2PerCapita)} metric tons
+            COï¿½ per Capita: ${d3.format('.2f')(d.co2PerCapita)} metric tons
         `;
         
         this.tooltip
@@ -597,8 +597,9 @@ class AnimatedScatterPlot {
 }
 
 // Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== 'undefined' && typeof module.exports === 'object') {
     module.exports = AnimatedScatterPlot;
-} else if (typeof window !== 'undefined') {
+}
+if (typeof window !== 'undefined') {
     window.AnimatedScatterPlot = AnimatedScatterPlot;
 }
