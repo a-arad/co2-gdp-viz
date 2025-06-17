@@ -369,3 +369,436 @@ describe('Frontend API Client', () => {
         });
     });
 });
+
+/**
+ * CountryDropdown Component Tests
+ * 
+ * Tests for the CountryDropdown multi-select component
+ */
+
+// Mock DOM environment for CountryDropdown tests
+Object.defineProperty(window, 'location', {
+    value: {
+        href: 'http://localhost:3000'
+    }
+});
+
+describe('CountryDropdown Component', () => {
+    let container;
+    let CountryDropdown;
+    
+    beforeAll(async () => {
+        // Import CountryDropdown component
+        CountryDropdown = require('../frontend/components/CountryDropdown.js');
+    });
+    
+    beforeEach(() => {
+        // Create container element
+        container = document.createElement('div');
+        container.id = 'test-dropdown';
+        document.body.appendChild(container);
+        
+        // Clear any existing fetch mocks
+        fetch.mockClear();
+    });
+    
+    afterEach(() => {
+        // Clean up container
+        if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
+        }
+        
+        // Remove any added styles
+        const styles = document.getElementById('country-dropdown-styles');
+        if (styles) {
+            styles.remove();
+        }
+    });
+    
+    describe('Component Initialization', () => {
+        test('should initialize with correct container', () => {
+            const mockCountries = {
+                countries: [
+                    { code: 'USA', name: 'United States' },
+                    { code: 'CHN', name: 'China' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockCountries
+            });
+            
+            const dropdown = new CountryDropdown('test-dropdown');
+            
+            expect(dropdown.containerId).toBe('test-dropdown');
+            expect(dropdown.container).toBe(container);
+            expect(dropdown.selectedCountries).toEqual([]);
+            expect(dropdown.isOpen).toBe(false);
+        });
+        
+        test('should throw error for invalid container', () => {
+            expect(() => {
+                new CountryDropdown('non-existent-container');
+            }).toThrow("Container with ID 'non-existent-container' not found");
+        });
+        
+        test('should apply custom configuration options', () => {
+            const mockCountries = {
+                countries: [
+                    { code: 'USA', name: 'United States' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockCountries
+            });
+            
+            const options = {
+                placeholder: 'Custom placeholder',
+                maxHeight: '300px',
+                searchPlaceholder: 'Custom search...',
+                maxSelectedDisplay: 5,
+                allowSelectAll: false
+            };
+            
+            const dropdown = new CountryDropdown('test-dropdown', options);
+            
+            expect(dropdown.config.placeholder).toBe('Custom placeholder');
+            expect(dropdown.config.maxHeight).toBe('300px');
+            expect(dropdown.config.searchPlaceholder).toBe('Custom search...');
+            expect(dropdown.config.maxSelectedDisplay).toBe(5);
+            expect(dropdown.config.allowSelectAll).toBe(false);
+        });
+    });
+    
+    describe('Country Loading', () => {
+        test('should load countries from API successfully', async () => {
+            const mockCountries = {
+                countries: [
+                    { code: 'USA', name: 'United States' },
+                    { code: 'CHN', name: 'China' },
+                    { code: 'GBR', name: 'United Kingdom' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockCountries
+            });
+            
+            const dropdown = new CountryDropdown('test-dropdown');
+            
+            // Wait for countries to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            expect(dropdown.countries).toHaveLength(3);
+            expect(dropdown.countries[0]).toEqual({ code: 'CHN', name: 'China' }); // Sorted by name
+            expect(dropdown.filteredCountries).toHaveLength(3);
+        });
+        
+        test('should handle API errors gracefully', async () => {
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+            
+            fetch.mockRejectedValueOnce(new Error('API Error'));
+            
+            const onError = jest.fn();
+            const dropdown = new CountryDropdown('test-dropdown', { onError });
+            
+            // Wait for error handling
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            expect(consoleSpy).toHaveBeenCalledWith('Error loading countries:', expect.any(Error));
+            expect(onError).toHaveBeenCalledWith(expect.any(Error));
+            
+            consoleSpy.mockRestore();
+        });
+        
+        test('should handle invalid response format', async () => {
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ invalid: 'format' })
+            });
+            
+            const dropdown = new CountryDropdown('test-dropdown');
+            
+            // Wait for error handling
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            expect(consoleSpy).toHaveBeenCalledWith('Error loading countries:', expect.any(Error));
+            
+            consoleSpy.mockRestore();
+        });
+    });
+    
+    describe('Selection Management', () => {
+        let dropdown;
+        
+        beforeEach(async () => {
+            const mockCountries = {
+                countries: [
+                    { code: 'USA', name: 'United States' },
+                    { code: 'CHN', name: 'China' },
+                    { code: 'GBR', name: 'United Kingdom' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockCountries
+            });
+            
+            dropdown = new CountryDropdown('test-dropdown');
+            
+            // Wait for countries to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+        });
+        
+        test('should toggle country selection', () => {
+            const onSelectionChange = jest.fn();
+            dropdown.onSelectionChange = onSelectionChange;
+            
+            // Select country
+            dropdown.toggleCountrySelection('USA');
+            expect(dropdown.selectedCountries).toContain('USA');
+            expect(onSelectionChange).toHaveBeenCalledWith(
+                ['USA'],
+                [{ code: 'USA', name: 'United States' }]
+            );
+            
+            // Deselect country
+            dropdown.toggleCountrySelection('USA');
+            expect(dropdown.selectedCountries).not.toContain('USA');
+            expect(onSelectionChange).toHaveBeenCalledWith([], []);
+        });
+        
+        test('should set selected countries programmatically', () => {
+            dropdown.setSelectedCountries(['USA', 'CHN']);
+            expect(dropdown.selectedCountries).toEqual(['USA', 'CHN']);
+        });
+        
+        test('should filter invalid country codes when setting selection', () => {
+            dropdown.setSelectedCountries(['USA', 'INVALID', 'CHN']);
+            expect(dropdown.selectedCountries).toEqual(['USA', 'CHN']);
+        });
+        
+        test('should clear all selections', () => {
+            dropdown.selectedCountries = ['USA', 'CHN'];
+            dropdown.clearSelection();
+            expect(dropdown.selectedCountries).toEqual([]);
+        });
+        
+        test('should handle select all functionality', () => {
+            dropdown.handleSelectAll(true);
+            expect(dropdown.selectedCountries).toEqual(['CHN', 'GBR', 'USA']); // Sorted
+            
+            dropdown.handleSelectAll(false);
+            expect(dropdown.selectedCountries).toEqual([]);
+        });
+        
+        test('should remove individual country selection', () => {
+            dropdown.selectedCountries = ['USA', 'CHN'];
+            dropdown.removeCountrySelection('USA');
+            expect(dropdown.selectedCountries).toEqual(['CHN']);
+        });
+    });
+    
+    describe('Search Functionality', () => {
+        let dropdown;
+        
+        beforeEach(async () => {
+            const mockCountries = {
+                countries: [
+                    { code: 'USA', name: 'United States' },
+                    { code: 'CHN', name: 'China' },
+                    { code: 'GBR', name: 'United Kingdom' },
+                    { code: 'FRA', name: 'France' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockCountries
+            });
+            
+            dropdown = new CountryDropdown('test-dropdown');
+            
+            // Wait for countries to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+        });
+        
+        test('should filter countries by name', () => {
+            dropdown.handleSearch('united');
+            expect(dropdown.filteredCountries).toHaveLength(2);
+            expect(dropdown.filteredCountries[0].name).toBe('United Kingdom');
+            expect(dropdown.filteredCountries[1].name).toBe('United States');
+        });
+        
+        test('should filter countries by code', () => {
+            dropdown.handleSearch('usa');
+            expect(dropdown.filteredCountries).toHaveLength(1);
+            expect(dropdown.filteredCountries[0].code).toBe('USA');
+        });
+        
+        test('should handle empty search term', () => {
+            dropdown.handleSearch('united');
+            expect(dropdown.filteredCountries).toHaveLength(2);
+            
+            dropdown.handleSearch('');
+            expect(dropdown.filteredCountries).toHaveLength(4);
+        });
+        
+        test('should handle no results', () => {
+            dropdown.handleSearch('nonexistent');
+            expect(dropdown.filteredCountries).toHaveLength(0);
+        });
+        
+        test('should clear search when closing dropdown', () => {
+            dropdown.handleSearch('united');
+            dropdown.clearSearch();
+            
+            expect(dropdown.searchTerm).toBe('');
+            expect(dropdown.filteredCountries).toHaveLength(4);
+        });
+    });
+    
+    describe('Dropdown Behavior', () => {
+        let dropdown;
+        
+        beforeEach(async () => {
+            const mockCountries = {
+                countries: [
+                    { code: 'USA', name: 'United States' },
+                    { code: 'CHN', name: 'China' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockCountries
+            });
+            
+            dropdown = new CountryDropdown('test-dropdown');
+            
+            // Wait for countries to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+        });
+        
+        test('should toggle dropdown open/close', () => {
+            expect(dropdown.isOpen).toBe(false);
+            
+            dropdown.toggleDropdown();
+            expect(dropdown.isOpen).toBe(true);
+            
+            dropdown.toggleDropdown();
+            expect(dropdown.isOpen).toBe(false);
+        });
+        
+        test('should open dropdown', () => {
+            dropdown.openDropdown();
+            expect(dropdown.isOpen).toBe(true);
+        });
+        
+        test('should close dropdown', () => {
+            dropdown.isOpen = true;
+            dropdown.closeDropdown();
+            expect(dropdown.isOpen).toBe(false);
+        });
+        
+        test('should check if dropdown is open', () => {
+            expect(dropdown.isDropdownOpen()).toBe(false);
+            dropdown.openDropdown();
+            expect(dropdown.isDropdownOpen()).toBe(true);
+        });
+    });
+    
+    describe('Public API', () => {
+        let dropdown;
+        
+        beforeEach(async () => {
+            const mockCountries = {
+                countries: [
+                    { code: 'USA', name: 'United States' },
+                    { code: 'CHN', name: 'China' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockCountries
+            });
+            
+            dropdown = new CountryDropdown('test-dropdown');
+            
+            // Wait for countries to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+        });
+        
+        test('should get selected countries', () => {
+            dropdown.selectedCountries = ['USA'];
+            const selected = dropdown.getSelectedCountries();
+            expect(selected).toEqual(['USA']);
+            expect(selected).not.toBe(dropdown.selectedCountries); // Should return copy
+        });
+        
+        test('should get available countries', () => {
+            const available = dropdown.getAvailableCountries();
+            expect(available).toHaveLength(2);
+            expect(available).not.toBe(dropdown.countries); // Should return copy
+        });
+        
+        test('should refresh countries data', async () => {
+            const newMockCountries = {
+                countries: [
+                    { code: 'FRA', name: 'France' },
+                    { code: 'DEU', name: 'Germany' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => newMockCountries
+            });
+            
+            await dropdown.refresh();
+            
+            expect(dropdown.countries).toHaveLength(2);
+            expect(dropdown.countries[0].name).toBe('France');
+        });
+    });
+    
+    describe('Component Cleanup', () => {
+        test('should destroy component and clean up', async () => {
+            const mockCountries = {
+                countries: [
+                    { code: 'USA', name: 'United States' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockCountries
+            });
+            
+            const dropdown = new CountryDropdown('test-dropdown');
+            
+            // Wait for initialization
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Verify component exists
+            expect(container.children.length).toBeGreaterThan(0);
+            
+            // Destroy component
+            dropdown.destroy();
+            
+            // Verify cleanup
+            expect(container.innerHTML).toBe('');
+            expect(dropdown.countries).toEqual([]);
+            expect(dropdown.selectedCountries).toEqual([]);
+            expect(dropdown.isOpen).toBe(false);
+        });
+    });
+});
