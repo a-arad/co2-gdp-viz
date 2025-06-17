@@ -1,0 +1,46 @@
+{
+  "name": "co2-gdp-viz",
+  "version": "1.0.0",
+  "description": "Interactive D3 visualization showing CO2 emissions vs GDP per capita over time using World Bank data",
+  "main": "frontend/main.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "dev": "python -m http.server 8000 --directory frontend",
+    "backend": "cd backend && python app.py"
+  },
+  "keywords": [
+    "d3",
+    "visualization",
+    "co2",
+    "gdp",
+    "world-bank",
+    "environment",
+    "economics"
+  ],
+  "author": "Claude Code",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "moduleFileExtensions": ["js"],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "frontend/**/*.js",
+      "!frontend/main.js"
+    ],
+    "setupFilesAfterEnv": []
+  }
+}
